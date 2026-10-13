@@ -65,7 +65,7 @@ export interface Game {
   vel: THREE.Vector3;
   zombies: Zombie[];
   lastHurt: number;
-  controls: { lock: () => void } | null;
+  controls: { lock: () => void; unlock?: () => void } | null;
 }
 
 let game: Game | null = null;

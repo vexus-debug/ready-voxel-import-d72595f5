@@ -175,6 +175,7 @@ export function RealmMap() {
               g.pos.set(x + 0.5, y, z + 0.5);
               g.vel.set(0, 0, 0);
               saveGame();
+              if (!touch.enabled) g.controls?.unlock?.();
               close();
             }
             drag.current = null;
