@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { getGame, emit, useUI } from "./state";
+import { getGame, emit, saveGame, useUI } from "./state";
 import { WATER_LEVEL } from "./world";
 import { getLandmarks, LANDMARK_GLYPH, mapView } from "./landmarks";
+import { touch } from "./touch";
 
 // Parchment palette (map-only artwork colours, rendered into a canvas)
 const INK = [58, 38, 22];
@@ -101,7 +102,11 @@ export function MiniMap() {
   const g = getGame();
   const S = 128;
   return (
-    <div className="pointer-events-auto absolute right-4 top-4 cursor-pointer" onPointerDown={() => { mapView.open = true; emit(); }}>
+    <div className="pointer-events-auto absolute right-4 top-4 cursor-pointer" onPointerDown={() => {
+      mapView.open = true;
+      if (!touch.enabled) getGame().controls?.unlock?.();
+      emit();
+    }}>
       <div className="relative overflow-hidden rounded-full" style={{ width: S, height: S, ...frame }}>
         <canvas ref={ref} width={S} height={S} className="absolute inset-0" />
         <Markers cx={g.pos.x} cz={g.pos.z} scale={1} w={S - 8} h={S - 8} labels={false} />
