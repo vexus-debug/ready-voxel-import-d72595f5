@@ -1,6 +1,7 @@
 import type { World } from "./world";
 import { M_CX, M_CZ } from "./world";
 import { CASTLE_SIZE } from "./castleData";
+import { LF_CX, LF_CZ } from "./linefield";
 
 export type LandmarkKind = "castle" | "spawn" | "village" | "tower" | "ruin" | "city";
 export interface Landmark { id: string; name: string; kind: LandmarkKind; x: number; z: number }
@@ -13,6 +14,7 @@ export function getLandmarks(world: World): Landmark[] {
     { id: "citadel", name: "Stone Citadel", kind: "castle", x: ox + CASTLE_SIZE[0] / 2, z: oz + CASTLE_SIZE[2] / 2 },
     { id: "spawn", name: "Pilgrim's Rest", kind: "spawn", x: sx, z: sz },
     { id: "metropolis", name: "Metropolis", kind: "city", x: M_CX, z: M_CZ },
+    { id: "linefield", name: "Linefield", kind: "city", x: LF_CX, z: LF_CZ },
   ];
 }
 

@@ -472,7 +472,7 @@ function Player({ zt }: { zt: React.MutableRefObject<ZombieTarget> }) {
         if (touch.moveX || touch.moveY) mv.addScaledVector(dir, touch.moveY).addScaledVector(r, touch.moveX);
       }
       camera.position.addScaledVector(mv, (k["ShiftLeft"] || touch.sprint ? 30 : 10) * dt);
-      camera.position.y = Math.max(-5, Math.min(140, camera.position.y));
+      camera.position.y = Math.max(-5, Math.min(420, camera.position.y));
       if (highlight.current) highlight.current.visible = false;
       g.vel.set(0, 0, 0);
       fallStart.current = null;
@@ -755,7 +755,7 @@ export function Game() {
             setTimeout(() => window.location.reload(), 300);
           });
         }}
-        camera={{ fov: 75, near: 0.05, far: 300, position: [g.pos.x, g.pos.y + 1.62, g.pos.z] }}>
+        camera={{ fov: 75, near: 0.05, far: 520, position: [g.pos.x, g.pos.y + 1.62, g.pos.z] }}>
         <Scene />
         <LandscapeFix portrait={portrait} w={w} h={h} />
         <PointerLockControls
