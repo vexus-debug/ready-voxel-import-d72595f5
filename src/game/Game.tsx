@@ -354,7 +354,11 @@ function Player({ zt }: { zt: React.MutableRefObject<ZombieTarget> }) {
       }
       if (e.code === "Space" && ui.locked) e.preventDefault();
       if (e.code === "KeyF" && ui.locked && !ui.dead) { ui.fly = !ui.fly; emit(); }
-      if (e.code === "KeyM" && !ui.dead) { mapView.open = !mapView.open; emit(); }
+      if (e.code === "KeyM" && !ui.dead) {
+        mapView.open = !mapView.open;
+        if (mapView.open && !touch.enabled) g.controls?.unlock?.();
+        emit();
+      }
       if (e.code === "KeyP" && ui.locked && !ui.dead) { ui.photo = !ui.photo; if (!ui.photo) ui.hideHud = false; emit(); }
       if (e.code === "KeyH" && ui.photo) { ui.hideHud = !ui.hideHud; emit(); }
     };
@@ -444,7 +448,7 @@ function Player({ zt }: { zt: React.MutableRefObject<ZombieTarget> }) {
     const dt = Math.min(delta, 0.05);
     clock.current = s.clock.elapsedTime;
     const k = keys.current;
-    const active = ui.locked && !ui.dead;
+    const active = ui.locked && !ui.dead && !mapView.open;
 
     // touch look
     if (touch.lookDX || touch.lookDY) {

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { getGame, emit, useUI } from "./state";
+import { getGame, emit, saveGame, useUI } from "./state";
 import { WATER_LEVEL } from "./world";
 import { getLandmarks, LANDMARK_GLYPH, mapView } from "./landmarks";
+import { touch } from "./touch";
 
 // Parchment palette (map-only artwork colours, rendered into a canvas)
 const INK = [58, 38, 22];
@@ -101,7 +102,11 @@ export function MiniMap() {
   const g = getGame();
   const S = 128;
   return (
-    <div className="pointer-events-auto absolute right-4 top-4 cursor-pointer" onPointerDown={() => { mapView.open = true; emit(); }}>
+    <div className="pointer-events-auto absolute right-4 top-4 cursor-pointer" onPointerDown={() => {
+      mapView.open = true;
+      if (!touch.enabled) getGame().controls?.unlock?.();
+      emit();
+    }}>
       <div className="relative overflow-hidden rounded-full" style={{ width: S, height: S, ...frame }}>
         <canvas ref={ref} width={S} height={S} className="absolute inset-0" />
         <Markers cx={g.pos.x} cz={g.pos.z} scale={1} w={S - 8} h={S - 8} labels={false} />
@@ -120,6 +125,8 @@ export function RealmMap() {
   const g = getGame();
   const [view, setView] = useState({ cx: g.pos.x, cz: g.pos.z, scale: 3 });
   const drag = useRef<{ x: number; y: number } | null>(null);
+  const gestureStart = useRef<{ x: number; y: number } | null>(null);
+  const didDrag = useRef(false);
   const W = 720, Hh = 480;
   useEffect(() => { if (mapView.open) setView((v) => ({ ...v, cx: g.pos.x, cz: g.pos.z })); }, [mapView.open]); // eslint-disable-line
   useEffect(() => { if (mapView.open && ref.current) draw(ref.current, view.cx, view.cz, view.scale, true); }, [view, ui.locked, mapView.open]); // eslint-disable-line
@@ -141,16 +148,39 @@ export function RealmMap() {
           className="relative touch-none overflow-hidden"
           style={{ width: `min(${W}px, 86vw)`, aspectRatio: `${W}/${Hh}`, border: "2px solid #5a3d22" }}
           onWheel={(e) => setView((v) => ({ ...v, scale: Math.min(12, Math.max(1, v.scale * (e.deltaY > 0 ? 1.2 : 1 / 1.2))) }))}
-          onPointerDown={(e) => { drag.current = { x: e.clientX, y: e.clientY }; (e.target as Element).setPointerCapture?.(e.pointerId); }}
+          onPointerDown={(e) => {
+            drag.current = { x: e.clientX, y: e.clientY };
+            gestureStart.current = { x: e.clientX, y: e.clientY };
+            didDrag.current = false;
+            e.currentTarget.setPointerCapture(e.pointerId);
+          }}
           onPointerMove={(e) => {
             if (!drag.current) return;
             const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
             const k = (W / r.width) * view.scale;
             const dx = e.clientX - drag.current.x, dy = e.clientY - drag.current.y;
+            const start = gestureStart.current;
+            if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 6) didDrag.current = true;
             drag.current = { x: e.clientX, y: e.clientY };
             setView((v) => ({ ...v, cx: v.cx - dx * k, cz: v.cz - dy * k }));
           }}
-          onPointerUp={() => (drag.current = null)}
+          onPointerUp={(e) => {
+            if (drag.current && !didDrag.current) {
+              const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+              const px = (e.clientX - r.left) * (W / r.width);
+              const py = (e.clientY - r.top) * (Hh / r.height);
+              const wx = Math.round(view.cx + (px - W / 2) * view.scale);
+              const wz = Math.round(view.cz + (py - Hh / 2) * view.scale);
+              const [x, y, z] = g.world.findDry(wx, wz);
+              g.pos.set(x + 0.5, y, z + 0.5);
+              g.vel.set(0, 0, 0);
+              saveGame();
+              if (!touch.enabled) g.controls?.unlock?.();
+              close();
+            }
+            drag.current = null;
+            gestureStart.current = null;
+          }}
         >
           <canvas ref={ref} width={W} height={Hh} className="absolute inset-0 h-full w-full" />
           <div className="absolute left-0 top-0 origin-top-left" style={{ width: W, height: Hh, transform: `scale(${1})` }}>
@@ -160,7 +190,7 @@ export function RealmMap() {
             <div className="text-4xl">✵</div><div className="text-base">N</div>
           </div>
           <div className="pointer-events-none absolute bottom-2 left-3 text-sm italic" style={{ color: "#3a2616" }}>
-            Drag to pan · scroll / ＋－ to zoom · M to close
+            Tap to teleport · drag to pan · scroll / ＋－ to zoom · M to close
           </div>
         </div>
       </div>
